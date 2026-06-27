@@ -13,7 +13,7 @@ chat_id = os.environ.get('CHAT_ID')
 telegram_token = os.environ.get('TELEGRAM_BOT_TOKEN')
 
 # 👇 Yahan apna channel name set karein 👇
-channel_name = "Deep Space" 
+channel_name = "Deep Space®" 
 
 print(f"DEBUG: Processing {len(scenes_data)} scenes async...")
 
@@ -61,7 +61,8 @@ async def process_scene(session, i, scene):
         tts_success = False
         for attempt in range(3):
             try:
-                communicate = edge_tts.Communicate(text_line, "hi-IN-MadhurNeural", rate="+10%")
+                # 👇 UPDATE: Changed from Hindi to USA English Voice 👇
+                communicate = edge_tts.Communicate(text_line, "en-US-ChristopherNeural", rate="+10%")
                 await asyncio.wait_for(communicate.save(raw_mp3), timeout=15.0)
                 tts_success = True
                 break
@@ -190,7 +191,7 @@ async def main_pipeline():
         
         run_id = os.environ.get('GITHUB_RUN_ID', str(int(time.time())))
         tag_name = f"vid-{run_id}"
-        repo_name = "amu8085-lab/my-project1" 
+        repo_name = "deepspaceusa-cyber/Deep-Space-USA-Long" 
         
         try:
             cmd = ['gh', 'release', 'create', tag_name, final_video, '--repo', repo_name, '--notes', 'Automated Video Render']
