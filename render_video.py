@@ -120,22 +120,24 @@ async def process_scene(session, i, scene):
         has_pop = os.path.exists(pop_path)
 
         # 👇 Watermark Fixed: 20% opacity (white@0.2), Top-Right (x=w-tw-40:y=40), Smaller Size (36) 👇
+        # [FIXED]: Added tpad and apad to guarantee perfect stream lengths and eliminate black gaps
         if is_valid_video:
             cmd = ['ffmpeg', '-y', '-ignore_editlist', '1', '-stream_loop', '-1', '-fflags', '+genpts', '-i', vid_path, '-ss', '0.2', '-i', raw_mp3]
             if has_pop: cmd += ['-i', pop_path]
-            v_filter = f"[0:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,setsar=1,format=yuv420p,fps=30,unsharp=5:5:0.5:5:5:0.0,eq=contrast=1.1:saturation=1.25,drawtext=text='{channel_name}':fontcolor=white@0.2:fontsize=36:x=w-tw-40:y=40,fade=t=in:st=0:d=0.5,fade=t=out:st={fade_out}:d=0.5[v]"
+            v_filter = f"[0:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,setsar=1,format=yuv420p,fps=30,unsharp=5:5:0.5:5:5:0.0,eq=contrast=1.1:saturation=1.25,drawtext=text='{channel_name}':fontcolor=white@0.2:fontsize=36:x=w-tw-40:y=40,fade=t=in:st=0:d=0.5,fade=t=out:st={fade_out}:d=0.5,tpad=stop_mode=clone:stop_duration=5[v]"
         else:
             cmd = ['ffmpeg', '-y', '-f', 'lavfi', '-i', f'color=c=#151525:s=1920x1080:d={dur}', '-ss', '0.2', '-i', raw_mp3]
             if has_pop: cmd += ['-i', pop_path]
-            v_filter = f"[0:v]drawtext=text='{channel_name}':fontcolor=white@0.2:fontsize=36:x=w-tw-40:y=40,fade=t=in:st=0:d=0.5,fade=t=out:st={fade_out}:d=0.5[v]"
+            v_filter = f"[0:v]drawtext=text='{channel_name}':fontcolor=white@0.2:fontsize=36:x=w-tw-40:y=40,fade=t=in:st=0:d=0.5,fade=t=out:st={fade_out}:d=0.5,tpad=stop_mode=clone:stop_duration=5[v]"
 
         if has_pop:
-            a_filter = "[1:a]volume=1.0[voice];[2:a]volume=0.8[pop];[voice][pop]amix=inputs=2:duration=first:dropout_transition=0[aout_mix];[aout_mix]volume=2.0[aout]"
+            a_filter = "[1:a]volume=1.0[voice];[2:a]volume=0.8[pop];[voice][pop]amix=inputs=2:duration=first:dropout_transition=0,apad=pad_dur=5[aout_mix];[aout_mix]volume=2.0[aout]"
             filter_complex = f"{v_filter};{a_filter}"
             a_map = '[aout]'
         else:
-            filter_complex = v_filter
-            a_map = '1:a'
+            a_filter = "[1:a]apad=pad_dur=5[aout]"
+            filter_complex = f"{v_filter};{a_filter}"
+            a_map = '[aout]'
             
         cmd += [
             '-filter_complex', filter_complex,
