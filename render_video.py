@@ -90,7 +90,7 @@ async def process_scene(session, i, scene):
         dur = max(1.0, raw_dur - 0.2) 
         fade_out = max(0, dur - 0.5)
         
-        # --- Visual Pipeline with Retries and 200KB Size Check ---
+        # --- Visual Pipeline with Retries and Size Check ---
         is_valid_video = False
         vid_url = await fetch_pexels_video(session, keyword)
         
@@ -103,8 +103,8 @@ async def process_scene(session, i, scene):
                     async with session.get(vid_url, timeout=15) as resp:
                         if resp.status == 200:
                             vid_bytes = await resp.read()
-                            # [IMPROVED]: Increased size threshold to 200KB to strictly avoid corrupt/small files
-                            if len(vid_bytes) > 200000: 
+                            # 👇 YAHAN LIMIT 50KB KAR DI GAYI HAI 👇
+                            if len(vid_bytes) > 50000: 
                                 with open(vid_path, "wb") as f:
                                     f.write(vid_bytes)
                                 is_valid_video = True
